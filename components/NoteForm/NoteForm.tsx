@@ -1,31 +1,31 @@
-"use client";
+'use client';
 
-import css from "./NoteForm.module.css";
+import css from './NoteForm.module.css';
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createNote } from "@/lib/api";
-import { ChangeEvent, useState } from "react";
-const noteTag = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
-import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createNote } from '@/lib/api/clientApi';
+import { ChangeEvent, useState } from 'react';
+const noteTag = ['Todo', 'Work', 'Personal', 'Meeting', 'Shopping'];
+import { useRouter } from 'next/navigation';
 
-import { useNoteStore } from "@/lib/store/noteStore";
+import { useNoteStore } from '@/lib/store/noteStore';
 
 export default function NoteForm() {
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
-  const draft = useNoteStore((s) => s.draft);
-  const setDraft = useNoteStore((s) => s.setDraft);
-  const clearDraft = useNoteStore((s) => s.clearDraft);
+  const draft = useNoteStore(s => s.draft);
+  const setDraft = useNoteStore(s => s.setDraft);
+  const clearDraft = useNoteStore(s => s.clearDraft);
 
   const handleAction = (formData: FormData) => {
-    const title = formData.get("title") as string;
-    const content = formData.get("content") as string;
-    const tag = formData.get("tag") as string;
+    const title = formData.get('title') as string;
+    const content = formData.get('content') as string;
+    const tag = formData.get('tag') as string;
 
     if (!title || !content) {
-      setErrorMessage("Please fill in all fields");
+      setErrorMessage('Please fill in all fields');
       return;
     }
 
@@ -33,15 +33,15 @@ export default function NoteForm() {
   };
 
   const { mutate, isPending } = useMutation({
-    mutationKey: ["createNote"],
+    mutationKey: ['createNote'],
     mutationFn: createNote,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
       clearDraft();
       router.back();
     },
-    onError: (error) => {
-      setErrorMessage("Error during creation:" + error.message);
+    onError: error => {
+      setErrorMessage('Error during creation:' + error.message);
     },
   });
 
@@ -88,7 +88,7 @@ export default function NoteForm() {
           onChange={handleChange}
           className={css.select}
         >
-          {noteTag.map((tag) => (
+          {noteTag.map(tag => (
             <option key={tag} value={tag}>
               {tag}
             </option>
@@ -106,7 +106,7 @@ export default function NoteForm() {
           Cancel
         </button>
         <button type="submit" className={css.submitButton} disabled={isPending}>
-          {isPending ? "Creating..." : "Create note"}
+          {isPending ? 'Creating...' : 'Create note'}
         </button>
       </div>
     </form>

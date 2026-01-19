@@ -1,14 +1,14 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async redirects() {
-    return [
+import { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
       {
-        source: "/notes",
-        destination: "/notes/filter/all",
-        permanent: true,
+        protocol: "https",
+        hostname: "ac.goit.global",
       },
-    ];
+    ],
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { fetchNotes } from "@/lib/api";
-import NoteList from "@/components/NoteList/NoteList";
-import Pagination from "@/components/Pagination/Pagination";
-import { useEffect, useState } from "react";
-import SearchBox from "@/components/SearchBox/SearchBox";
-import { useDebounce } from "use-debounce";
-import css from "./page.module.css";
-import Link from "next/link";
+import { useQuery } from '@tanstack/react-query';
+import { fetchNotes } from '@/lib/api/clientApi';
+import NoteList from '@/components/NoteList/NoteList';
+import Pagination from '@/components/Pagination/Pagination';
+import { useEffect, useState } from 'react';
+import SearchBox from '@/components/SearchBox/SearchBox';
+import { useDebounce } from 'use-debounce';
+import css from './page.module.css';
+import Link from 'next/link';
 
 interface Props {
   tagValue: string;
@@ -17,7 +17,7 @@ interface Props {
 export default function NotesClient({ tagValue }: Props) {
   const [page, setPage] = useState(1);
   const limit = 12;
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 300);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function NotesClient({ tagValue }: Props) {
   }, [tagValue, debouncedSearch]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["notes", "filter", tagValue, page, debouncedSearch],
+    queryKey: ['notes', 'filter', tagValue, page, debouncedSearch],
     queryFn: () =>
       fetchNotes({
         tag: tagValue,
@@ -54,7 +54,7 @@ export default function NotesClient({ tagValue }: Props) {
             <Pagination
               totalPages={data.totalPages}
               page={page}
-              onPageChange={(p) => setPage(p)}
+              onPageChange={p => setPage(p)}
             />
           )}
         </div>
