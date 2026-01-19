@@ -1,6 +1,7 @@
 import { nextApi } from './api';
 import { Note } from '@/types/note';
 import { User } from '@/types/user';
+import { AxiosResponse } from 'axios';
 import { cookies } from 'next/headers';
 
 interface noteResponse {
@@ -14,8 +15,9 @@ interface noteParams {
   perPage?: number;
 }
 
-export type CheckSessionRequest = {
+export type CheckSessionResponse = {
   success: boolean;
+  user?: User;
 };
 
 export const fetchNotes = async ({
@@ -62,17 +64,14 @@ export const getMe = async (): Promise<User> => {
   return data;
 };
 
-export const checkSession = async (): Promise<boolean> => {
+export const checkSession = async (): Promise<
+  AxiosResponse<CheckSessionResponse>
+> => {
   const cookieStore = await cookies();
 
-  try {
-    const res = await nextApi.get<CheckSessionRequest>('/auth/session', {
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
-    });
-    return res.data.success;
-  } catch (error) {
-    return false;
-  }
+  return await nextApi.get<CheckSessionResponse>('/auth/session', {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
 };
