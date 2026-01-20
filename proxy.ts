@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { parse } from 'cookie';
 import { checkSession } from './lib/api/serverApi';
 
 const privateRoutes = ['/profile', '/notes'];
@@ -8,7 +9,6 @@ const publicRoutes = ['/sign-in', '/sign-up'];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cookieStore = await cookies();
-
   const accessToken = cookieStore.get('accessToken')?.value;
   const refreshToken = cookieStore.get('refreshToken')?.value;
 
@@ -17,48 +17,58 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  if (!accessToken && refreshToken) {
-    try {
-      const sessionData = await checkSession();
+  if (!accessToken) {
+    if (refreshToken) {
+      const { headers } = await checkSession();
+      const setCookie = headers['set-cookie'];
 
-      const response = isPublicRoute
-        ? NextResponse.redirect(new URL('/profile', request.url))
-        : NextResponse.next();
-
-      const setCookieHeader = sessionData.headers['set-cookie'];
-      if (setCookieHeader) {
-        const cookiesArray = Array.isArray(setCookieHeader)
-          ? setCookieHeader
-          : [setCookieHeader];
-
-        cookiesArray.forEach(cookie =>
-          response.headers.append('Set-Cookie', cookie)
-        );
+      if (setCookie) {
+        const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
+        for (const cookieStr of cookieArray) {
+          const parsed = parse(cookieStr);
+          const options = {
+            expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
+            path: parsed.Path,
+            maxAge: Number(parsed['Max-Age']),
+          };
+          if (parsed.accessToken)
+            cookieStore.set('accessToken', parsed.accessToken, options);
+          if (parsed.refreshToken)
+            cookieStore.set('refreshToken', parsed.refreshToken, options);
+        }
+        if (isPublicRoute) {
+          return NextResponse.redirect(new URL('/', request.url), {
+            headers: {
+              Cookie: cookieStore.toString(),
+            },
+          });
+        }
+        if (isPrivateRoute) {
+          return NextResponse.next({
+            headers: {
+              Cookie: cookieStore.toString(),
+            },
+          });
+        }
       }
-
-      return response;
-    } catch (error) {
-      const response = NextResponse.redirect(new URL('/sign-in', request.url));
-      response.cookies.delete('accessToken');
-      response.cookies.delete('refreshToken');
-      return response;
     }
-  }
+    if (isPublicRoute) {
+      return NextResponse.next();
+    }
 
-  if (isPrivateRoute) {
-    //  ПЕРЕВІРКА ПРИВАТНИХ РОУТІВ
-    if (!accessToken && !refreshToken) {
+    if (isPrivateRoute) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
   }
 
-  //  ПЕРЕВІРКА ПУБЛІЧНИХ РОУТІВ (щоб залогінених не пускало на SignUp)
-  if (isPublicRoute && (accessToken || refreshToken)) {
-    return NextResponse.redirect(new URL('/profile', request.url));
+  if (isPublicRoute) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
-
-  return NextResponse.next();
+  if (isPrivateRoute) {
+    return NextResponse.next();
+  }
 }
+
 export const config = {
   matcher: ['/profile/:path*', '/sign-in', '/sign-up', '/notes/:path*'],
 };
